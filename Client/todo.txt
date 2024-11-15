@@ -1,0 +1,10 @@
+- als client afsluit wordt nu normaal verwijdert uit user_list bij server 
+    kan het precies wel nog toevoegen als chat?
+
+- mss als client afsluit, in alle andere clients de chat met die client wegdoen?
+
+- mensen online tonen
+
+- messages encrypteren
+
+- project opdracht zelf
