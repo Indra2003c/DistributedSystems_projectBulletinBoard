@@ -79,12 +79,8 @@ public class Client {
 
   }
 
-  public static void showReceivedMessage(Boolean isPrivate, String sender, String message) {
-    // if (!isPrivate) {
-    //   gui.addMessageToChat("Group Chat", "[" + sender + "]: " + message, false);
-    // } else {
+  private static void showReceivedMessage(String sender, String message) {
       gui.addMessageToChat(sender, message, false);
-    // }
   }
 
   public static boolean userInUse(String username) {
@@ -106,21 +102,80 @@ public class Client {
     security_information.put(map_key, new CommunicationState(K_ba, idx_ba, tag_ba));
   }
 
-  public void send(String sender_receiver, String message){
-    //needs to be implemented
-  }
-
-  public void receiveAB(){
-    //needs to be implemented
-  }
-
-  private String encrypt(String data, String key){
+  private String hash(String x){
     //needs to be implemented
     return null;
   }
 
-  private String open(String encryptedData, String key){
+  private String KDF(String k){
     //needs to be implemented
+    //nieuwe key, afgeleid uit oude key
+    return null;
+  }
+
+  public void send(String message){ //String sender_receiver, 
+    //needs to be implemented
+
+    //idx' element van reeel getal tussen {0,...,n-1} met size van bulletinboard n
+    //tag' element van reeel getal T
+
+    //u = encrypt(message || idx' || tag', sender_receiver)
+    //you're the sender
+
+    //write(idx_AB, u hash(tagAB)) in bulletin board, oorspronkelijke idx en tag
+      //oorspronkelijke idx, want de idx' is voor bericht erna analoog voor tag
+
+    //put tag' and idx' from security_information with key "sender-receiver"
+      //in plaats van oorspronkelijke tag en idx
+
+    //K_ab (in security_information) = KDF(K_ab)
+    
+  }
+
+  public void receiveAB(){
+    //needs to be implemented
+
+    //u = get(idx_ab, tag_ab) uit bulletin board
+
+    //if (u != null)
+      //and (m||idx'||tag')=open(u) is succesfull
+      //then
+        //put in security_information idx and tag, needed for next message:
+        //idx_ab = idx'_ab veranderen in security infromation
+        //tag_ab = tag'_ab veranderen in security infromation
+
+        //K_ab = KDF(K_ab) in security information
+
+        //m is received message =>showReceivedMessage(sender, m)
+        //showreceivedMesssage or return m...
+    
+    //indien return m. dan hier in de else: return null
+
+
+    
+  }
+
+  private String encrypt(String value, String map_key){
+    //needs to be implemented
+    //value =  message || idx || tag
+
+    //encrypt "message || idx || tag" with the symmetric key  from security_information with key map_key
+    
+    //return encrypted message
+
+    return null;
+  }
+
+  private String open(String value, String map_key){
+    //needs to be implemented
+
+    //decrypt with symmetrix key in security_information map_key
+
+    //seperate m || idx  || tag
+    
+
+    //return decrypted message
+
     return null;
   }
 
