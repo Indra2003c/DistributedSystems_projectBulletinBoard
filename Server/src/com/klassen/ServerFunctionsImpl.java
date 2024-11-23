@@ -20,8 +20,13 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     if (Server.isInUserNameList(username)) {
       return "Username already in use.";
     } else {
-      Server.addToUserNameList(username);
-      return "Username registered.";
+      try{
+        Server.registerClient(username);
+        return "Username registered.";
+      } catch(Exception e){
+        e.printStackTrace();
+      }
+      return "Problem registering user";
     }
   }
 

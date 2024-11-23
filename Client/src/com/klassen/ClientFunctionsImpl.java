@@ -15,11 +15,11 @@ public class ClientFunctionsImpl extends UnicastRemoteObject implements ClientFu
         this.id = id;
     }
 
-    @Override
-    public void receiveMessage(boolean isPrivate, String message, String sender) {
-        System.out.println("[" + sender + "]: " + message);
-        Client.showReceivedMessage(isPrivate,sender,message);
-    }
+    // @Override
+    // public void receiveMessage(boolean isPrivate, String message, String sender) {
+    //     System.out.println("[" + sender + "]: " + message);
+    //     Client.showReceivedMessage(isPrivate,sender,message);
+    // }
 
     @Override
     public String getId() {
