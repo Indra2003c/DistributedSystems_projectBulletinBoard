@@ -37,33 +37,49 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
 
 
 
-  @Override
-  public void sendMessage(String message, ClientFunctions sender) { // broadcast
-    try {
-      Server.broadcastMessage(message, sender); // Broadcast message to all clients
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    }
-  }
+
+
+  // @Override
+  // public void sendMessage(String message, ClientFunctions sender) { // broadcast
+  //   try {
+  //     Server.broadcastMessage(message, sender); // Broadcast message to all clients
+  //   } catch (RemoteException e) {
+  //     e.printStackTrace();
+  //   }
+  // }
+
+  // @Override
+  // public synchronized void registerClient(ClientFunctions client) throws RemoteException {
+  //   Server.registerClient(client);
+  // }
+
+  // @Override
+  // public void unregisterClient(ClientFunctions client) throws RemoteException{
+  //   Server.unregisterClient(client);
+  // }
 
   @Override
-  public synchronized void registerClient(ClientFunctions client) throws RemoteException {
-    Server.registerClient(client);
-  }
-
-  @Override
-  public void unregisterClient(ClientFunctions client) throws RemoteException{
+  public void unregisterClient(String client) throws RemoteException{
     Server.unregisterClient(client);
   }
-
-
   @Override
-  public void sendOnlineList(ClientFunctions client) throws RemoteException{
-    Server.sendOnlineList(client);
+  public void bulletinBoard_add(int i, String v, String tag){
+    Server.bulletinBoard.add(i, v, tag);
   }
 
   @Override
-  public void sendPrivateMessage(String message,ClientFunctions clientImpl,String receiver)throws RemoteException{
-    Server.sendPrivateMessage(message, clientImpl, receiver);
+  public String bulletinBoard_get(int i, String b){
+    String m = Server.bulletinBoard.get(i,b);
+    return m;
   }
+
+  // @Override
+  // public void sendOnlineList(ClientFunctions client) throws RemoteException{
+  //   Server.sendOnlineList(client);
+  // }
+
+  // @Override
+  // public void sendPrivateMessage(String message,ClientFunctions clientImpl,String receiver)throws RemoteException{
+  //   Server.sendPrivateMessage(message, clientImpl, receiver);
+  // }
 }

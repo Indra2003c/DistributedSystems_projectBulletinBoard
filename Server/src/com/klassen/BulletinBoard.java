@@ -34,6 +34,7 @@ public class BulletinBoard {
 
     private String hash(String b){
         //needs to be implemented
+        //zelfde als bij clients
         return null;
     }
 }

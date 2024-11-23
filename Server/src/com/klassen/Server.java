@@ -12,10 +12,12 @@ import org.w3c.dom.css.Counter;
 public class Server {
   static ArrayList<String> username_list = new ArrayList<>();
   // static private List<ClientFunctions> clients = new ArrayList<>();
-  public BulletinBoard bulletinBoard;
+  public static BulletinBoard bulletinBoard;
 
-  private Server(BulletinBoard bulletinBoard){
-    this.bulletinBoard = bulletinBoard;
+  private Server(){
+    bulletinBoard = new BulletinBoard();
+
+
   }
   private void startServer() {
     try {
@@ -32,8 +34,7 @@ public class Server {
   }
 
   public static void main(String[] args) {
-    BulletinBoard bulletinBoard = new BulletinBoard();
-    Server main = new Server(bulletinBoard);
+    Server main = new Server();
     main.startServer();
   }
 

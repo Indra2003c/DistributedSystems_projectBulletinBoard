@@ -11,6 +11,10 @@ public interface ServerFunctions extends Remote {
 	String check_and_add_username(String username) throws RemoteException;
 	void unregisterClient(String client) throws RemoteException;
 	boolean isUser(String username) throws RemoteException;
+
+	void bulletinBoard_add(int i, String v, String tag);
+    String bulletinBoard_get(int i, String b);
+
 	// void sendMessage(String message, ClientFunctions sender) throws RemoteException;
 
 	// void registerClient(ClientFunctions client) throws RemoteException;

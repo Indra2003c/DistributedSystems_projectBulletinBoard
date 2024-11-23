@@ -15,7 +15,7 @@ import java.util.Base64;
 
 public class Client {
   static ServerFunctions impl;
-  ClientFunctionsImpl clientImpl;
+  // ClientFunctionsImpl clientImpl;
   String username;
   Registry registry;
   static Gui gui;
@@ -39,20 +39,20 @@ public class Client {
     }
   }
 
-  public void initializeClient() {
-    try {
-      clientImpl = new ClientFunctionsImpl(username);
-      registry.rebind("ClientService", clientImpl);
-      // impl.registerClient(clientImpl);
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.out.println("client initialize failed");
-    }
-  }
+  // public void initializeClient() {
+  //   try {
+  //     clientImpl = new ClientFunctionsImpl(username);
+  //     registry.rebind("ClientService", clientImpl);
+  //     // impl.registerClient(clientImpl);
+  //   } catch (Exception e) {
+  //     e.printStackTrace();
+  //     System.out.println("client initialize failed");
+  //   }
+  // }
 
   public void shutdown() {
     try {
-        if (impl != null && clientImpl != null) {
+        if (impl != null ) { //&& clientImpl != null
             //impl.unregisterClient(clientImpl);
             impl.unregisterClient(username);
             //registry.unbind("ClientService");
@@ -179,7 +179,7 @@ public class Client {
     return null;
   }
 
-  
+  //TODO: om de zoveel tijd moet client pollen om te kijken of er message is voor hem (receive doen) of met reload knop
   public static void main(String[] args) throws RemoteException {
     try {
       Client main = new Client();
@@ -213,7 +213,7 @@ public class Client {
         } catch (Exception e) {
           e.printStackTrace();
         }
-        main.initializeClient();
+        //main.initializeClient();
         gui = new Gui(main);
       });
     } catch (Exception e) {
