@@ -1,17 +1,25 @@
 package com.klassen;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 //CLIENT
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SealedObject;
+import javax.crypto.SecretKey;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.nimbus.State;
 
 import java.util.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 public class Client {
   static ServerFunctions impl;
@@ -95,7 +103,7 @@ public class Client {
     return false;
   }
 
-  public void setup_sender_receiver(String sender_a, String receiver_b ,String K_ab, String idx_ab, String tag_ab, String K_ba, String idx_ba, String tag_ba){  //moet nog opgeroepen worden bij initialisatie stap, bv in beide clients iets overtypen als begin
+  public void setup_sender_receiver(String sender_a, String receiver_b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){  //moet nog opgeroepen worden bij initialisatie stap, bv in beide clients iets overtypen als begin
     String map_key = sender_a + "-" + receiver_b;
     security_information.put(map_key, new CommunicationState(K_ab, idx_ab, tag_ab));
     map_key = receiver_b + "-" + sender_a;
@@ -107,29 +115,36 @@ public class Client {
     return null;
   }
 
-  private String KDF(String k){
+  private SecretKey KDF(SecretKey k){
     //needs to be implemented
     //nieuwe key, afgeleid uit oude key
     return null;
   }
 
-  public void send(String message){ //String sender_receiver, 
-    //needs to be implemented
+  public void send(String message, String receiver){
+    String map_key = username + "-" + receiver; //getting the right key for this sender-receiver pair
 
-    //idx' element van reeel getal tussen {0,...,n-1} met size van bulletinboard n
+    //idx': element of real number between {0,...,n-1} (with n the size of the bulletinboard)
+    Random random = new Random(); //used to generate random numbers (used for generating a new idx)
+    int new_idx = random.nextInt(BulletinBoard.get_size()); //inclusive zero and exclusive n
     //tag' element van reeel getal T
+    String new_tag = "nog te doen"; //NOG DOEN
 
     //u = encrypt(message || idx' || tag', sender_receiver)
     //you're the sender
+    SealedObject u = encrypt(message + "__" + new_idx + "__" + new_tag, map_key);
 
-    //write(idx_AB, u hash(tagAB)) in bulletin board, oorspronkelijke idx en tag
-      //oorspronkelijke idx, want de idx' is voor bericht erna analoog voor tag
+    //write(idx_AB, u hash(tagAB)) in bulletin board, use the original/old idx and tag: the new_idx and new_tag are meant for the next message
+    impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u, hash(security_information.get(map_key).get_tag()));
 
-    //put tag' and idx' from security_information with key "sender-receiver"
-      //in plaats van oorspronkelijke tag en idx
+    //replace the old tag and idx in security_information with tag' (= new_tag) and idx' (= new_idx) for this sender-receiver pair
+    security_information.get(map_key).set_idx(new_idx);
+    security_information.get(map_key).set_tag(new_tag);
 
     //K_ab (in security_information) = KDF(K_ab)
-    
+    //replace the old K in security_information with the new_K for this sender-receiver pair
+    SecretKey new_K = KDF(security_information.get(map_key).get_K());
+    security_information.get(map_key).set_K(new_K);
   }
 
   public void receiveAB(){
@@ -155,27 +170,72 @@ public class Client {
     
   }
 
-  private String encrypt(String value, String map_key){
-    //needs to be implemented
-    //value =  message || idx || tag
+  private SealedObject encrypt(String value, String map_key){ //value =  message || idx || tag
+    SecretKey sKey = security_information.get(map_key).get_K(); //get the symmetric key of the sender
+    try{
+      //encryption of value (= "message || idx || tag")
+      Cipher c = Cipher.getInstance("AES");
+      c.init(Cipher.ENCRYPT_MODE, sKey);
+      SealedObject encrypted_message = new SealedObject(value, c);
 
-    //encrypt "message || idx || tag" with the symmetric key  from security_information with key map_key
-    
-    //return encrypted message
+      //returning the encrypted message
+      return encrypted_message;
+    }catch (NoSuchAlgorithmException e){
+      System.out.println("NoSuchAlgorithmException: " + e.getMessage());
+    }catch (NoSuchPaddingException e){
+      System.out.println("NoSuchPaddingException: " + e.getMessage());
+    }catch (InvalidKeyException e){
+      System.out.println("InvalidKeyException: " + e.getMessage());
+    }catch (IllegalBlockSizeException e) {
+      System.out.println("IllegalBlockSizeException: " + e.getMessage());
+    } catch (IOException e) {
+      System.out.println("IOException: " + e.getMessage());
+    }
 
+    //returning null if the try/catch fails
     return null;
   }
 
-  private String open(String value, String map_key){
-    //needs to be implemented
+  private String open(SealedObject value, String map_key){
+    SecretKey sKey = security_information.get(map_key).get_K(); //get the symmetric key of the receiver (wich is identical to the one of the sender)
+    try{
+      //decryption of value (= the received message)
+      Cipher c = Cipher.getInstance("AES");
+      c.init(Cipher.DECRYPT_MODE, sKey);
+      String decrypted_message = (String)value.getObject(c);
 
-    //decrypt with symmetrix key in security_information map_key
+      //seperating m || idx  || tag
+      String[] parts = decrypted_message.split("__"); //we assume a message format of: message__idx__tag
+      String message = parts[0];
 
-    //seperate m || idx  || tag
-    
+      //get the current state of the client
+      CommunicationState current_state = security_information.get(map_key);
 
-    //return decrypted message
+      //update the idx and the tag after receiving the message
+      String idx = parts[1];
+      String tag = parts[2];
+      current_state.set_idx(Integer.parseInt(idx));
+      current_state.set_tag(tag);
 
+      //returning of the decrypted message
+      return message;
+    }catch (NoSuchAlgorithmException e){
+      System.out.println("NoSuchAlgorithmException: " + e.getMessage());
+    }catch (NoSuchPaddingException e){
+      System.out.println("NoSuchPaddingException: " + e.getMessage());
+    }catch (InvalidKeyException e){
+      System.out.println("InvalidKeyException: " + e.getMessage());
+    }catch (IllegalBlockSizeException e) {
+      System.out.println("IllegalBlockSizeException: " + e.getMessage());
+    } catch (IOException e) {
+      System.out.println("IOException: " + e.getMessage());
+    } catch (ClassNotFoundException e) {
+      System.out.println("ClassNotFoundException: " + e.getMessage());
+    } catch (BadPaddingException e) {
+      System.out.println("BadPaddingException: " + e.getMessage());
+    }
+
+    //returning null if the try/catch fails
     return null;
   }
 
@@ -224,16 +284,42 @@ public class Client {
 }
 
 class CommunicationState{
-  private String K;
-  private String idx;
+  private SecretKey K;
+  private int idx;
   private String tag;
 
   // private String sender;
   // private String receiver;
 
-  public CommunicationState(String key, String idx, String tag){
+  public CommunicationState(SecretKey key, int idx, String tag){
     this.K = key;
     this.idx = idx;
     this.tag = tag;
+  }
+
+  //getters
+  public SecretKey get_K(){
+    return K;
+  }
+
+  public int get_idx(){
+    return idx;
+  }
+
+  public String get_tag(){
+    return tag;
+  }
+
+  //setters
+  public void set_idx(int new_idx){
+    idx = new_idx;
+  }
+
+  public void set_tag(String new_tag){
+    tag = new_tag;
+  }
+
+  public void set_K(SecretKey new_K){
+    K = new_K;
   }
 }

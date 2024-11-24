@@ -6,6 +6,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.crypto.SealedObject;
+
 public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFunctions {
   //private List<String> username_list;
   //private List<ClientFunctions> clients;
@@ -63,13 +65,13 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     Server.unregisterClient(client);
   }
   @Override
-  public void bulletinBoard_add(int i, String v, String tag){
+  public void bulletinBoard_add(int i, SealedObject v, String tag){
     Server.bulletinBoard.add(i, v, tag);
   }
 
   @Override
-  public String bulletinBoard_get(int i, String b){
-    String m = Server.bulletinBoard.get(i,b);
+  public SealedObject bulletinBoard_get(int i, String b){
+    SealedObject m = Server.bulletinBoard.get(i,b);
     return m;
   }
 
