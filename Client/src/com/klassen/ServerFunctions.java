@@ -2,18 +2,18 @@
 package com.klassen;
 
 import java.rmi.Remote; 
-import java.rmi.RemoteException; 
+import java.rmi.RemoteException;
 
-import java.rmi.Remote; 
-import java.rmi.RemoteException; 
+import javax.crypto.SealedObject;
 
 public interface ServerFunctions extends Remote {  
 	String check_and_add_username(String username) throws RemoteException;
 	void unregisterClient(String client) throws RemoteException;
 	boolean isUser(String username) throws RemoteException;
 
-	void bulletinBoard_add(int i, String v, String tag);
-    String bulletinBoard_get(int i, String b);
+	void bulletinBoard_add(int i, SealedObject v, String tag);
+    SealedObject bulletinBoard_get(int i, String b);
+	int bulletinBoardGetSize()throws RemoteException;
 
 	// void sendMessage(String message, ClientFunctions sender) throws RemoteException;
 

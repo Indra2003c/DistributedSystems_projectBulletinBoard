@@ -13,7 +13,7 @@ public interface ServerFunctions extends Remote {
 
 	void bulletinBoard_add(int i, SealedObject v, String tag);
     SealedObject bulletinBoard_get(int i, String b);
-
+	int bulletinBoardGetSize()throws RemoteException;
 	// void sendMessage(String message, ClientFunctions sender) throws RemoteException;
 
 	// void registerClient(ClientFunctions client) throws RemoteException;

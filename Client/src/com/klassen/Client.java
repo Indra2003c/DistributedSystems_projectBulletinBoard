@@ -27,8 +27,9 @@ public class Client {
   String username;
   Registry registry;
   static Gui gui;
+  int board_size=0;
 
-  HashMap<String, CommunicationState> security_information;  //contains key = "A-B" with value CommunicationState: "K_ab, idx_ab, tag_ab"
+  HashMap<String, CommunicationState> security_information;  //contains key = "A__B" with value CommunicationState: "K_ab, idx_ab, tag_ab"
 
   public Client() {
     security_information = new HashMap<>();
@@ -40,6 +41,7 @@ public class Client {
       // fire to localhost port 1099
       registry = LocateRegistry.getRegistry("localhost", 1099);
       impl = (ServerFunctions) registry.lookup("ServerService");
+      this.board_size = impl.bulletinBoardGetSize();
     } catch (Exception e) {
 
       e.printStackTrace();
@@ -103,10 +105,10 @@ public class Client {
     return false;
   }
 
-  public void setup_sender_receiver(String sender_a, String receiver_b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){  //moet nog opgeroepen worden bij initialisatie stap, bv in beide clients iets overtypen als begin
-    String map_key = sender_a + "-" + receiver_b;
+  public void setup_sender_receiver(String a, String b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){  //moet nog opgeroepen worden bij initialisatie stap, bv in beide clients iets overtypen als begin
+    String map_key = a + "__" + b;
     security_information.put(map_key, new CommunicationState(K_ab, idx_ab, tag_ab));
-    map_key = receiver_b + "-" + sender_a;
+    map_key = b + "__" + a;
     security_information.put(map_key, new CommunicationState(K_ba, idx_ba, tag_ba));
   }
 
@@ -122,11 +124,11 @@ public class Client {
   }
 
   public void send(String message, String receiver){
-    String map_key = username + "-" + receiver; //getting the right key for this sender-receiver pair
+    String map_key = username + "__" + receiver; //getting the right key for this sender__receiver pair
 
     //idx': element of real number between {0,...,n-1} (with n the size of the bulletinboard)
     Random random = new Random(); //used to generate random numbers (used for generating a new idx)
-    int new_idx = random.nextInt(BulletinBoard.get_size()); //inclusive zero and exclusive n
+    int new_idx = random.nextInt(board_size); //inclusive zero and exclusive n
     //tag' element van reeel getal T
     String new_tag = "nog te doen"; //NOG DOEN
 
@@ -137,21 +139,45 @@ public class Client {
     //write(idx_AB, u hash(tagAB)) in bulletin board, use the original/old idx and tag: the new_idx and new_tag are meant for the next message
     impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u, hash(security_information.get(map_key).get_tag()));
 
-    //replace the old tag and idx in security_information with tag' (= new_tag) and idx' (= new_idx) for this sender-receiver pair
+    //replace the old tag and idx in security_information with tag' (= new_tag) and idx' (= new_idx) for this sender__receiver pair
     security_information.get(map_key).set_idx(new_idx);
     security_information.get(map_key).set_tag(new_tag);
 
     //K_ab (in security_information) = KDF(K_ab)
-    //replace the old K in security_information with the new_K for this sender-receiver pair
+    //replace the old K in security_information with the new_K for this sender__receiver pair
     SecretKey new_K = KDF(security_information.get(map_key).get_K());
     security_information.get(map_key).set_K(new_K);
   }
 
-  public void receiveAB(){
+  public void reload(){
     //needs to be implemented
+    //for all chats: try receive
+    for(String key: security_information.keySet()){
+      receiveAB(key);
+    }
+  }
 
+  public void receiveAB(String map_key){
+    //needs to be implemented
+    CommunicationState state = security_information.get(map_key);
     //u = get(idx_ab, tag_ab) uit bulletin board
+    SealedObject u = impl.bulletinBoard_get(state.get_idx(), state.get_tag());
 
+    if(u != null){
+      String message = open(u, map_key);
+      if(message != null){
+        String[] parts = message.split("__");
+        String text = parts[0];
+        int idx_new =  Integer.parseInt(parts[1]);
+        String tag_new = parts[2];
+
+        SecretKey K_ab = KDF(security_information.get(map_key).get_K());
+        security_information.replace(map_key, new CommunicationState(K_ab, idx_new, tag_new));
+
+        String[] sender_receiver = map_key.split("__");
+        showReceivedMessage(sender_receiver[0], text);
+      }
+    }
     //if (u != null)
       //and (m||idx'||tag')=open(u) is succesfull
       //then

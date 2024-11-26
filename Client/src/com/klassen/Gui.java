@@ -1,6 +1,7 @@
 package com.klassen;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -17,11 +18,14 @@ public class Gui extends JFrame {
     private JTextField inputField;
     private JButton sendButton;
     private JButton addChatButton;
+    private JButton reloadButton;
 
     private static Map<String, JPanel> chatPanels; // opslaan panels voor elke chat
     private static String currentChat;
     private String username;
     private Client client;
+
+    private Timer reloadTimer;
 
     public Gui(Client client) {
         super("Chat Application - " + client.username);
@@ -31,7 +35,6 @@ public class Gui extends JFrame {
         setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        
         chatListModel = new DefaultListModel<>();
         chatList = new JList<>(chatListModel);
         chatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -68,24 +71,46 @@ public class Gui extends JFrame {
         addChatButton.setBackground(new Color(0, 176, 95));
         addChatButton.setForeground(Color.WHITE);
         addChatButton.addActionListener(e -> addChat());
-
         
+        reloadButton = new JButton("");
+        reloadButton.setIcon(new ImageIcon("data\\icons-refresh.png"));
+        reloadButton.setFont(new Font("Arial", Font.BOLD, 18));
+        reloadButton.setBackground(new Color(0, 176, 95));
+        reloadButton.setForeground(Color.WHITE);
+        reloadButton.addActionListener(e -> reloadFunction());
+
         chatPanels = new HashMap<>();
         currentChat = "Group Chat";
         chatPanels.put(currentChat, new JPanel());
         chatPanels.get(currentChat).setLayout(new BoxLayout(chatPanels.get(currentChat), BoxLayout.Y_AXIS));
         chatPanels.get(currentChat).setBackground(new Color(7, 24, 32));
         chatListModel.addElement(currentChat);
-        
+
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BorderLayout());
         leftPanel.setBackground(new Color(17, 27, 33));
         leftPanel.add(new JScrollPane(chatList), BorderLayout.CENTER);
         leftPanel.add(addChatButton, BorderLayout.SOUTH);
+        //leftPanel.add(reloadButton, BorderLayout.SOUTH);
         leftPanel.setPreferredSize(new Dimension(250, getHeight()));
 
         JPanel chatPanel = new JPanel();
         chatPanel.setLayout(new BorderLayout());
+
+        JPanel chatHeaderPanel = new JPanel();
+        chatHeaderPanel.setLayout(new BorderLayout());
+
+        
+        JLabel chatNameLabel = new JLabel(currentChat);
+        chatHeaderPanel.setBackground(new Color(17, 27, 33));
+        chatNameLabel.setBackground(new Color(17, 27, 33));
+        chatNameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        chatNameLabel.setForeground(Color.WHITE);
+        chatHeaderPanel.add(chatNameLabel, BorderLayout.WEST);
+        chatHeaderPanel.add(reloadButton, BorderLayout.EAST);
+
+        
+        chatPanel.add(chatHeaderPanel, BorderLayout.NORTH);
         chatPanel.add(chatScrollPane, BorderLayout.CENTER);
 
         JPanel inputPanel = new JPanel();
@@ -93,6 +118,10 @@ public class Gui extends JFrame {
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
         chatPanel.add(inputPanel, BorderLayout.SOUTH);
+
+        // Timer voor auto reload elke 2 sec
+        reloadTimer = new Timer(2000, e -> reloadFunction()); // 2000 milliseconds = 2 seconds
+        reloadTimer.start();
 
         add(leftPanel, BorderLayout.WEST);
         add(chatPanel, BorderLayout.CENTER);
@@ -146,6 +175,12 @@ public class Gui extends JFrame {
             }
 
         }
+    }
+
+    private void reloadFunction() {
+        System.out.println("Reloading chat...");
+
+        client.reload();
     }
 
     private void switchChat(String chatName) {
