@@ -11,8 +11,8 @@ public interface ServerFunctions extends Remote {
 	void unregisterClient(String client) throws RemoteException;
 	boolean isUser(String username) throws RemoteException;
 
-	void bulletinBoard_add(int i, SealedObject v, String tag);
-    SealedObject bulletinBoard_get(int i, String b);
+	void bulletinBoard_add(int i, byte[] v, String tag) throws RemoteException;
+    byte[] bulletinBoard_get(int i, String b) throws RemoteException;
 	int bulletinBoardGetSize()throws RemoteException;
 
 	// void sendMessage(String message, ClientFunctions sender) throws RemoteException;

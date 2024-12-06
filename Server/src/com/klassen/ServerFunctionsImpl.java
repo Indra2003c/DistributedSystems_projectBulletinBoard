@@ -65,13 +65,13 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     Server.unregisterClient(client);
   }
   @Override
-  public void bulletinBoard_add(int i, SealedObject v, String tag){
+  public void bulletinBoard_add(int i, byte[] v, String tag){
     Server.bulletinBoard.add(i, v, tag);
   }
 
   @Override
-  public SealedObject bulletinBoard_get(int i, String b){
-    SealedObject m = Server.bulletinBoard.get(i,b);
+  public byte[] bulletinBoard_get(int i, String b){
+    byte[] m = Server.bulletinBoard.get(i,b);
     return m;
   }
 

@@ -1,10 +1,13 @@
 package com.klassen;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -170,6 +173,13 @@ public class Gui extends JFrame {
 
                 chatPanels.put(chatName, newChatPanel);
                 chatListModel.addElement(chatName);
+
+
+                String [] security_information_client = client.generate_initial_security_information_for_connection(); //we generaten de initiële secret key voor de chat A (sender) --> B (wanneer we hetzelfde doen voor B, genereren we de secret key voor de chat B --> A)
+
+                String[] security_information_other_party = add_security_information(chatName);
+
+                client.set_up_connection(security_information_client, security_information_other_party, chatName);
             } else {
                 JOptionPane.showMessageDialog(null, "Unkown user", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -177,8 +187,55 @@ public class Gui extends JFrame {
         }
     }
 
+    private String[] add_security_information(String chatName){
+        String[] ret = new String[3];
+        boolean validInput = false;
+
+        while (!validInput) {
+            JPanel inputPanel = new JPanel();
+            inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
+
+            //input secret key
+            JLabel secret_key_Label = new JLabel("Enter the secret key of " + chatName);
+            JTextField secret_key_Field = new JTextField(20);
+            inputPanel.add(secret_key_Label);
+            inputPanel.add(secret_key_Field);
+
+            //input idx
+            JLabel idx_Label = new JLabel("Enter the idx of " + chatName);
+            JTextField idx_Field = new JTextField(20);
+            inputPanel.add(idx_Label);
+            inputPanel.add(idx_Field);
+
+            //input tag
+            JLabel tag_Label = new JLabel("Enter the tag of " + chatName);
+            JTextField tag_Field = new JTextField(20);
+            inputPanel.add(tag_Label);
+            inputPanel.add(tag_Field);
+
+            int result = JOptionPane.showConfirmDialog(this, inputPanel, "Private Chat", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                String sKey = secret_key_Field.getText().trim();
+                String idx = idx_Field.getText().trim();
+                String tag = tag_Field.getText().trim();
+    
+                // Controleer of de invoervelden geldig zijn
+                if(sKey.isEmpty() || idx.isEmpty() || tag.isEmpty()){
+                    JOptionPane.showMessageDialog(this, "Fill in all the security details!", "Error", JOptionPane.ERROR_MESSAGE);  
+                }else{
+                    ret[0] = sKey;
+                    ret[1] = idx;
+                    ret[2] = tag;
+                    validInput = true;
+                }
+            }
+        }
+        return ret;
+    }
+
     private void reloadFunction() {
-        System.out.println("Reloading chat...");
+        //System.out.println("Reloading chat...");
 
         client.reload();
     }

@@ -1,6 +1,12 @@
 package com.klassen;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator; //zijn van een externe library (zie jar file in de map "lib")
+import org.bouncycastle.crypto.params.HKDFParameters;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
 import java.rmi.RemoteException;
 //CLIENT
 import java.rmi.registry.LocateRegistry;
@@ -9,9 +15,11 @@ import java.rmi.registry.Registry;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.nimbus.State;
@@ -76,7 +84,7 @@ public class Client {
 
   public void messageInput(String message, String receiver) {
     try {
-      System.out.println(message);
+      send(message, receiver);
       // if (receiver == null) {
       //   //impl.sendMessage(message, clientImpl);
       // } else {
@@ -89,8 +97,8 @@ public class Client {
 
   }
 
-  private static void showReceivedMessage(String sender, String message) {
-      gui.addMessageToChat(sender, message, false);
+  private static void showReceivedMessage(String sender, String message) { 
+    gui.addMessageToChat(sender, message, false);
   }
 
   public static boolean userInUse(String username) {
@@ -120,7 +128,19 @@ public class Client {
   private SecretKey KDF(SecretKey k){
     //needs to be implemented
     //nieuwe key, afgeleid uit oude key
-    return null;
+    byte[] existingKey = k.getEncoded();
+        
+    //nog salt maken
+    //byte[] salt = "random-salt".getBytes();
+
+    HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new org.bouncycastle.crypto.digests.SHA256Digest());
+    hkdf.init(new HKDFParameters(existingKey, null, null));
+
+    // Afgeleide sleutel genereren (bijv. 256 bits = 32 bytes)
+    byte[] derivedKey = new byte[existingKey.length];
+    hkdf.generateBytes(derivedKey, 0, derivedKey.length);
+
+    return new SecretKeySpec(derivedKey, "AES");
   }
 
   public void send(String message, String receiver){
@@ -135,9 +155,20 @@ public class Client {
     //u = encrypt(message || idx' || tag', sender_receiver)
     //you're the sender
     SealedObject u = encrypt(message + "__" + new_idx + "__" + new_tag, map_key);
+    byte[] u_byte = null;
+    try{
+      u_byte = sealedObject_to_byteArray(u);
+    }catch(IOException e){
+      System.out.println("IOException: " + e.getMessage());
+    }
 
     //write(idx_AB, u hash(tagAB)) in bulletin board, use the original/old idx and tag: the new_idx and new_tag are meant for the next message
-    impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u, hash(security_information.get(map_key).get_tag()));
+    //impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u, hash(security_information.get(map_key).get_tag()));
+    try{
+      impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u_byte, hash(security_information.get(map_key).get_tag()));
+    }catch(RemoteException e){
+      System.out.println("RemoteException: " + e.getMessage());
+    }
 
     //replace the old tag and idx in security_information with tag' (= new_tag) and idx' (= new_idx) for this sender__receiver pair
     security_information.get(map_key).set_idx(new_idx);
@@ -161,17 +192,29 @@ public class Client {
     //needs to be implemented
     CommunicationState state = security_information.get(map_key);
     //u = get(idx_ab, tag_ab) uit bulletin board
-    SealedObject u = impl.bulletinBoard_get(state.get_idx(), state.get_tag());
+    byte[] u_byte = null;
+    try{
+      u_byte = impl.bulletinBoard_get(state.get_idx(), state.get_tag());
+    }catch(RemoteException e){
+      System.out.println("RemoteException: " + e.getMessage());
+    }
+
+    SealedObject u = null;
+    try{
+      u = byteArray_to_sealedObject(u_byte);
+    }catch(Exception e){
+      //System.out.println("Exception: " + e.getMessage()); //print nog al veel als er geen messages worden gestuurd
+    }
 
     if(u != null){
       String message = open(u, map_key);
       if(message != null){
-        String[] parts = message.split("__");
+        String[] parts = message.split("__"); 
         String text = parts[0];
         int idx_new =  Integer.parseInt(parts[1]);
         String tag_new = parts[2];
 
-        SecretKey K_ab = KDF(security_information.get(map_key).get_K());
+        SecretKey K_ab = KDF(state.get_K());
         security_information.replace(map_key, new CommunicationState(K_ab, idx_new, tag_new));
 
         String[] sender_receiver = map_key.split("__");
@@ -230,21 +273,22 @@ public class Client {
       c.init(Cipher.DECRYPT_MODE, sKey);
       String decrypted_message = (String)value.getObject(c);
 
+      //WERD OOK AL IN DE RECEIVE GEDAAN!!!
       //seperating m || idx  || tag
-      String[] parts = decrypted_message.split("__"); //we assume a message format of: message__idx__tag
-      String message = parts[0];
+      //String[] parts = decrypted_message.split("__"); //we assume a message format of: message__idx__tag
+      //String message = parts[0];
 
       //get the current state of the client
-      CommunicationState current_state = security_information.get(map_key);
+      //CommunicationState current_state = security_information.get(map_key);
 
       //update the idx and the tag after receiving the message
-      String idx = parts[1];
-      String tag = parts[2];
-      current_state.set_idx(Integer.parseInt(idx));
-      current_state.set_tag(tag);
+      //String idx = parts[1];
+      //String tag = parts[2];
+      //current_state.set_idx(Integer.parseInt(idx));
+      //current_state.set_tag(tag);
 
       //returning of the decrypted message
-      return message;
+      return decrypted_message;
     }catch (NoSuchAlgorithmException e){
       System.out.println("NoSuchAlgorithmException: " + e.getMessage());
     }catch (NoSuchPaddingException e){
@@ -307,6 +351,78 @@ public class Client {
     }
 
   }
+
+  public byte[] sealedObject_to_byteArray(SealedObject so) throws IOException{
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+  
+    ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+  
+    objectOutputStream.writeObject(so);
+  
+    objectOutputStream.close();
+  
+    return byteArrayOutputStream.toByteArray();
+  }
+
+  public SealedObject byteArray_to_sealedObject(byte[] b) throws Exception{
+    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(b);
+  
+    ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
+  
+    SealedObject so = (SealedObject) objectInputStream.readObject();
+  
+    objectInputStream.close();
+  
+    return so;
+  }
+
+  String[] generate_initial_security_information_for_connection(){
+    String[] ret = new String[3];
+    
+    Random random = new Random(); //idx
+    int idx = random.nextInt(board_size);
+
+    String tag = "nog te doen"; //NOG DOEN //tag
+    
+    SecretKey sKey = null;
+    try{
+      KeyGenerator keygen = KeyGenerator.getInstance("AES"); //symmetric key
+      sKey = keygen.generateKey();
+    }catch(NoSuchAlgorithmException e){
+      System.out.println("NoSuchAlgorithmException: " + e.getMessage());
+    }
+    
+    if(sKey != null){
+      String encodedKey = Base64.getEncoder().encodeToString(sKey.getEncoded());
+      System.out.println(); //voor mooiere formatting
+      System.out.println("--------------------Security information of " + username + "--------------------");
+      System.out.println("effectieve SecretKey in Base64: " + encodedKey); // om te kunnen ingeven bij de andere client
+      System.out.println("idx: " + idx);
+      System.out.println("tag: " + tag);
+      System.out.println("---------------------------------------------------------------------------");
+
+      ret[0] = encodedKey;
+      ret[1] = String.valueOf(idx);
+      ret[2] = tag;
+    }
+
+    return ret;
+  }
+
+  void set_up_connection(String[] security_information_client, String[] security_information_other_party, String chatName){
+    byte[] decodedKey_1 = Base64.getDecoder().decode(security_information_client[0]);
+    SecretKey K_ab = new SecretKeySpec(decodedKey_1, 0, decodedKey_1.length, "AES");
+    int idx_ab = Integer.parseInt(security_information_client[1]);
+    String tag_ab = security_information_client[2];
+
+    byte[] decodedKey_2 = Base64.getDecoder().decode(security_information_other_party[0]);
+    SecretKey K_ba = new SecretKeySpec(decodedKey_2, 0, decodedKey_2.length, "AES");
+    int idx_ba = Integer.parseInt(security_information_other_party[1]);
+    String tag_ba = security_information_other_party[2];
+
+    setup_sender_receiver(username, chatName, K_ab, idx_ab, tag_ab, K_ba, idx_ba, tag_ba);
+  }
+
 }
 
 class CommunicationState{
