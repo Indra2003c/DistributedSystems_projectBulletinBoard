@@ -70,8 +70,8 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
   }
 
   @Override
-  public byte[] bulletinBoard_get(int i, String b){
-    byte[] m = Server.bulletinBoard.get(i,b);
+  public byte[] bulletinBoard_get(int idx, String b){
+    byte[] m = Server.bulletinBoard.get(idx,b);
     return m;
   }
 

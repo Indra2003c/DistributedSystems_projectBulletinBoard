@@ -12,7 +12,7 @@ public interface ServerFunctions extends Remote {
 	boolean isUser(String username) throws RemoteException;
 
 	void bulletinBoard_add(int i, byte[] v, String tag) throws RemoteException;
-    byte[] bulletinBoard_get(int i, String b) throws RemoteException;
+    byte[] bulletinBoard_get(int idx, String b) throws RemoteException;
 	int bulletinBoardGetSize()throws RemoteException;
 
 	// void sendMessage(String message, ClientFunctions sender) throws RemoteException;

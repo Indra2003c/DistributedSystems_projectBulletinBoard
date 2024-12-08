@@ -175,7 +175,7 @@ public class Gui extends JFrame {
                 chatListModel.addElement(chatName);
 
 
-                String [] security_information_client = client.generate_initial_security_information_for_connection(); //we generaten de initiële secret key voor de chat A (sender) --> B (wanneer we hetzelfde doen voor B, genereren we de secret key voor de chat B --> A)
+                String [] security_information_client = client.generate_initial_security_information_for_connection(chatName); //we generaten de initiële secret key voor de chat A (sender) --> B (wanneer we hetzelfde doen voor B, genereren we de secret key voor de chat B --> A)
 
                 String[] security_information_other_party = add_security_information(chatName);
 

@@ -23,9 +23,11 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.nimbus.State;
-
+import java.security.SecureRandom;
 import java.util.*;
+import java.util.Base64.Encoder;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -36,11 +38,18 @@ public class Client {
   Registry registry;
   static Gui gui;
   int board_size=0;
+  private MessageDigest sha;
 
   HashMap<String, CommunicationState> security_information;  //contains key = "A__B" with value CommunicationState: "K_ab, idx_ab, tag_ab"
 
   public Client() {
     security_information = new HashMap<>();
+    try {
+      sha = MessageDigest.getInstance("SHA-256");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
   }
 
   private void initializeServer() {
@@ -120,9 +129,18 @@ public class Client {
     security_information.put(map_key, new CommunicationState(K_ba, idx_ba, tag_ba));
   }
 
-  private String hash(String x){
-    //needs to be implemented
-    return null;
+  private String hash(String b){
+        try{
+          byte[] b_bytes = b.getBytes();
+          sha.update(b_bytes);
+          byte[] hash_b = sha.digest();
+          String hash_b_string = Base64.getEncoder().encodeToString(hash_b);
+          return hash_b_string;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
   }
 
   private SecretKey KDF(SecretKey k){
@@ -147,10 +165,11 @@ public class Client {
     String map_key = username + "__" + receiver; //getting the right key for this sender__receiver pair
 
     //idx': element of real number between {0,...,n-1} (with n the size of the bulletinboard)
-    Random random = new Random(); //used to generate random numbers (used for generating a new idx)
-    int new_idx = random.nextInt(board_size); //inclusive zero and exclusive n
-    //tag' element van reeel getal T
-    String new_tag = "nog te doen"; //NOG DOEN
+    //Random random = new Random(); //used to generate random numbers (used for generating a new idx)
+    SecureRandom sec_rand = new SecureRandom();
+    int new_idx = sec_rand.nextInt(board_size); //inclusive zero and exclusive n
+    //tag' element van  T
+    String new_tag = generateSafeToken();
 
     //u = encrypt(message || idx' || tag', sender_receiver)
     //you're the sender
@@ -273,7 +292,7 @@ public class Client {
       c.init(Cipher.DECRYPT_MODE, sKey);
       String decrypted_message = (String)value.getObject(c);
 
-      //WERD OOK AL IN DE RECEIVE GEDAAN!!!
+      //WERD OOK AL IN DE RECEIVE GEDAAN!!! 
       //seperating m || idx  || tag
       //String[] parts = decrypted_message.split("__"); //we assume a message format of: message__idx__tag
       //String message = parts[0];
@@ -376,13 +395,24 @@ public class Client {
     return so;
   }
 
-  String[] generate_initial_security_information_for_connection(){
+  private String generateSafeToken() {
+    SecureRandom random = new SecureRandom();
+    byte bytes[] = new byte[20];
+    random.nextBytes(bytes);
+    Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+    String token = encoder.encodeToString(bytes);
+    return token;
+}
+
+  String[] generate_initial_security_information_for_connection(String chatName){
     String[] ret = new String[3];
     
-    Random random = new Random(); //idx
-    int idx = random.nextInt(board_size);
-
-    String tag = "nog te doen"; //NOG DOEN //tag
+    //Random random = new Random(); //idx
+    SecureRandom sec_rand = new SecureRandom();
+    int idx = sec_rand.nextInt(board_size); //inclusive zero and exclusive n
+    
+    //tag' element van  T
+    String tag = generateSafeToken();
     
     SecretKey sKey = null;
     try{
@@ -395,7 +425,7 @@ public class Client {
     if(sKey != null){
       String encodedKey = Base64.getEncoder().encodeToString(sKey.getEncoded());
       System.out.println(); //voor mooiere formatting
-      System.out.println("--------------------Security information of " + username + "--------------------");
+      System.out.println("--------------------Security information of " + username + " (for chat "+ chatName + " - "+ username +")"+"--------------------");
       System.out.println("effectieve SecretKey in Base64: " + encodedKey); // om te kunnen ingeven bij de andere client
       System.out.println("idx: " + idx);
       System.out.println("tag: " + tag);
