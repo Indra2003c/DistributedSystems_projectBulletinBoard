@@ -9,8 +9,6 @@ import java.util.List;
 import javax.crypto.SealedObject;
 
 public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFunctions {
-  //private List<String> username_list;
-  //private List<ClientFunctions> clients;
 
   public ServerFunctionsImpl() throws RemoteException { //List<String> username_list, List<ClientFunctions> clients
     //this.username_list = username_list; // referentie naar de username list die de server heeft
@@ -37,28 +35,6 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     return(Server.isInUserNameList(username));
   }
 
-
-
-
-
-  // @Override
-  // public void sendMessage(String message, ClientFunctions sender) { // broadcast
-  //   try {
-  //     Server.broadcastMessage(message, sender); // Broadcast message to all clients
-  //   } catch (RemoteException e) {
-  //     e.printStackTrace();
-  //   }
-  // }
-
-  // @Override
-  // public synchronized void registerClient(ClientFunctions client) throws RemoteException {
-  //   Server.registerClient(client);
-  // }
-
-  // @Override
-  // public void unregisterClient(ClientFunctions client) throws RemoteException{
-  //   Server.unregisterClient(client);
-  // }
 
   @Override
   public void unregisterClient(String client) throws RemoteException{

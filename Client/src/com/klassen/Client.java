@@ -33,7 +33,6 @@ import java.security.SecureRandom;
 
 public class Client {
   static ServerFunctions impl;
-  // ClientFunctionsImpl clientImpl;
   String username;
   Registry registry;
   static Gui gui;
@@ -66,23 +65,10 @@ public class Client {
     }
   }
 
-  // public void initializeClient() {
-  //   try {
-  //     clientImpl = new ClientFunctionsImpl(username);
-  //     registry.rebind("ClientService", clientImpl);
-  //     // impl.registerClient(clientImpl);
-  //   } catch (Exception e) {
-  //     e.printStackTrace();
-  //     System.out.println("client initialize failed");
-  //   }
-  // }
-
   public void shutdown() {
     try {
-        if (impl != null ) { //&& clientImpl != null
-            //impl.unregisterClient(clientImpl);
+        if (impl != null ) { 
             impl.unregisterClient(username);
-            //registry.unbind("ClientService");
         }
         System.out.println("Client successfully unregistered and resources cleaned up.");
     } catch (Exception e) {
@@ -94,12 +80,6 @@ public class Client {
   public void messageInput(String message, String receiver) {
     try {
       send(message, receiver);
-      // if (receiver == null) {
-      //   //impl.sendMessage(message, clientImpl);
-      // } else {
-        //impl.sendPrivateMessage(message, clientImpl, receiver);
-      // }
-
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -122,7 +102,7 @@ public class Client {
     return false;
   }
 
-  public void setup_sender_receiver(String a, String b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){  //moet nog opgeroepen worden bij initialisatie stap, bv in beide clients iets overtypen als begin
+  public void setup_sender_receiver(String a, String b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){ 
     String map_key = a + "__" + b;
     security_information.put(map_key, new CommunicationState(K_ab, idx_ab, tag_ab));
     map_key = b + "__" + a;
@@ -144,13 +124,9 @@ public class Client {
   }
 
   private SecretKey KDF(SecretKey k){
-    //needs to be implemented
     //nieuwe key, afgeleid uit oude key
     byte[] existingKey = k.getEncoded();
         
-    //nog salt maken
-    //byte[] salt = "random-salt".getBytes();
-
     HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new org.bouncycastle.crypto.digests.SHA256Digest());
     hkdf.init(new HKDFParameters(existingKey, null, null));
 
@@ -200,7 +176,6 @@ public class Client {
   }
 
   public void reload(){
-    //needs to be implemented
     //for all chats: try receive
     for(String key: security_information.keySet()){
       receiveAB(key);
@@ -208,7 +183,6 @@ public class Client {
   }
 
   public void receiveAB(String map_key){
-    //needs to be implemented
     CommunicationState state = security_information.get(map_key);
     //u = get(idx_ab, tag_ab) uit bulletin board
     byte[] u_byte = null;
@@ -222,7 +196,7 @@ public class Client {
     try{
       u = byteArray_to_sealedObject(u_byte);
     }catch(Exception e){
-      //System.out.println("Exception: " + e.getMessage()); //print nog al veel als er geen messages worden gestuurd
+      
     }
 
     if(u != null){
@@ -292,20 +266,6 @@ public class Client {
       c.init(Cipher.DECRYPT_MODE, sKey);
       String decrypted_message = (String)value.getObject(c);
 
-      //WERD OOK AL IN DE RECEIVE GEDAAN!!! 
-      //seperating m || idx  || tag
-      //String[] parts = decrypted_message.split("__"); //we assume a message format of: message__idx__tag
-      //String message = parts[0];
-
-      //get the current state of the client
-      //CommunicationState current_state = security_information.get(map_key);
-
-      //update the idx and the tag after receiving the message
-      //String idx = parts[1];
-      //String tag = parts[2];
-      //current_state.set_idx(Integer.parseInt(idx));
-      //current_state.set_tag(tag);
-
       //returning of the decrypted message
       return decrypted_message;
     }catch (NoSuchAlgorithmException e){
@@ -328,7 +288,6 @@ public class Client {
     return null;
   }
 
-  //TODO: om de zoveel tijd moet client pollen om te kijken of er message is voor hem (receive doen) of met reload knop
   public static void main(String[] args) throws RemoteException {
     try {
       Client main = new Client();
@@ -362,7 +321,6 @@ public class Client {
         } catch (Exception e) {
           e.printStackTrace();
         }
-        //main.initializeClient();
         gui = new Gui(main);
       });
     } catch (Exception e) {
@@ -407,7 +365,6 @@ public class Client {
   String[] generate_initial_security_information_for_connection(String chatName){
     String[] ret = new String[3];
     
-    //Random random = new Random(); //idx
     SecureRandom sec_rand = new SecureRandom();
     int idx = sec_rand.nextInt(board_size); //inclusive zero and exclusive n
     
@@ -459,9 +416,6 @@ class CommunicationState{
   private SecretKey K;
   private int idx;
   private String tag;
-
-  // private String sender;
-  // private String receiver;
 
   public CommunicationState(SecretKey key, int idx, String tag){
     this.K = key;

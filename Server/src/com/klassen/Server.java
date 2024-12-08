@@ -11,7 +11,6 @@ import org.w3c.dom.css.Counter;
 
 public class Server {
   static ArrayList<String> username_list = new ArrayList<>();
-  // static private List<ClientFunctions> clients = new ArrayList<>();
   public static BulletinBoard bulletinBoard;
 
   private Server(){
@@ -38,9 +37,6 @@ public class Server {
     main.startServer();
   }
 
-  // public static void addToUserNameList(String username){
-  //   username_list.add(username);
-  // }
   public static boolean isInUserNameList(String username){
     return username_list.contains(username);
   }
@@ -49,43 +45,7 @@ public class Server {
   }
 
   static public synchronized void unregisterClient(String client) throws RemoteException { //ClientFunctions
-    //clients.remove(client);
     username_list.remove(client);
     System.out.println("removed: "+client);
-  }
-
-  // public static synchronized void broadcastMessage(String message, ClientFunctions sender) throws RemoteException {
-  //   for (ClientFunctions client : clients) {
-  //     if(!client.getId().equals(sender.getId()) ){
-  //       String sender_name = sender.getId();
-  //       System.out.println("[" + sender_name + "]: " + message);
-  //       client.receiveMessage(false, message, sender_name); 
-  //     }
-      
-  //   }
-  // }
-
-
-  // public static void sendOnlineList(ClientFunctions client)throws RemoteException{
-  //   int size = clients.size();
-  //   ArrayList<String> list_online = new ArrayList<>();
-  //   for(ClientFunctions c: clients){
-  //     list_online.add(c.getId());
-  //   }
-  //   String list_online_string = list_online.toString();
-  //   client.receiveMessage(false, list_online_string, "Online list");
-  // }
-
-  // public static void sendPrivateMessage(String message,ClientFunctions sender,String receiver) throws RemoteException{
-  //   for (ClientFunctions client : clients) {
-  //     if(!client.getId().equals(sender.getId()) && client.getId().equals(receiver)){
-  //       String sender_name = sender.getId();
-  //       System.out.println("[ private mess from " + sender_name + "]: " + message);
-  //       client.receiveMessage(true,message, sender_name);  
-  //     }
-      
-  //   }
-  // }
-
-  
+  }  
 }
