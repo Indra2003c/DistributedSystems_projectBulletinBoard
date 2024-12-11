@@ -11,10 +11,15 @@ import org.w3c.dom.css.Counter;
 
 public class Server {
   static ArrayList<String> username_list = new ArrayList<>();
-  public static BulletinBoard bulletinBoard;
-
+  //public static BulletinBoard bulletinBoard;
+  static ArrayList<BulletinBoard> bulletinBoards = new ArrayList<>();
+  public static int NUMBER_BULLETINBOARDS = 3;
   private Server(){
-    bulletinBoard = new BulletinBoard();
+
+    for(int i = 0; i< NUMBER_BULLETINBOARDS; i++){
+      bulletinBoards.add(new BulletinBoard());
+    }
+    
 
 
   }

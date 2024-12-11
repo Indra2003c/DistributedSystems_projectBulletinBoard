@@ -41,19 +41,24 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     Server.unregisterClient(client);
   }
   @Override
-  public void bulletinBoard_add(int i, byte[] v, String tag){
-    Server.bulletinBoard.add(i, v, tag);
+  public void bulletinBoard_add(int boardidx, int i, byte[] v, String tag){
+    Server.bulletinBoards.get(boardidx).add(i, v, tag);
   }
 
   @Override
-  public byte[] bulletinBoard_get(int idx, String b){
-    byte[] m = Server.bulletinBoard.get(idx,b);
+  public byte[] bulletinBoard_get(int boardidx, int idx, String b){
+    byte[] m = Server.bulletinBoards.get(boardidx).get(idx,b);
     return m;
   }
 
   @Override
   public int bulletinBoardGetSize(){
     return BulletinBoard.get_size();
+  }
+
+  @Override
+  public int getNumberOfBoards(){
+    return Server.bulletinBoards.size();
   }
 
   // @Override

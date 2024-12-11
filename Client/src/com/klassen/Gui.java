@@ -191,7 +191,7 @@ public class Gui extends JFrame {
     }
 
     private String[] add_security_information(String chatName){
-        String[] ret = new String[3];
+        String[] ret = new String[4];
         boolean validInput = false;
 
         while (!validInput) {
@@ -203,6 +203,12 @@ public class Gui extends JFrame {
             JTextField secret_key_Field = new JTextField(20);
             inputPanel.add(secret_key_Label);
             inputPanel.add(secret_key_Field);
+
+            //input idxboard
+            JLabel boardidx_Label = new JLabel("Enter the board idx of " + chatName);
+            JTextField boardidx_Field = new JTextField(20);
+            inputPanel.add(boardidx_Label);
+            inputPanel.add(boardidx_Field);
 
             //input idx
             JLabel idx_Label = new JLabel("Enter the idx of " + chatName);
@@ -224,6 +230,7 @@ public class Gui extends JFrame {
 
             if (result == JOptionPane.OK_OPTION) {
                 String sKey = secret_key_Field.getText().trim();
+                String boardidx = boardidx_Field.getText().trim();
                 String idx = idx_Field.getText().trim();
                 String tag = tag_Field.getText().trim();
     
@@ -232,8 +239,9 @@ public class Gui extends JFrame {
                     JOptionPane.showMessageDialog(this, "Fill in all the security details!", "Error", JOptionPane.ERROR_MESSAGE);  
                 }else{
                     ret[0] = sKey;
-                    ret[1] = idx;
-                    ret[2] = tag;
+                    ret[1] = boardidx;
+                    ret[2] = idx;
+                    ret[3] = tag;
                     validInput = true;
                 }
             }

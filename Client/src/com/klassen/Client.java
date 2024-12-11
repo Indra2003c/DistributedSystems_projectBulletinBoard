@@ -37,6 +37,7 @@ public class Client {
   Registry registry;
   static Gui gui;
   int board_size=0;
+  int number_of_boards = 0;
   private MessageDigest sha;
 
   HashMap<String, CommunicationState> security_information;  //contains key = "A__B" with value CommunicationState: "K_ab, idx_ab, tag_ab"
@@ -58,6 +59,7 @@ public class Client {
       registry = LocateRegistry.getRegistry("localhost", 1099);
       impl = (ServerFunctions) registry.lookup("ServerService");
       this.board_size = impl.bulletinBoardGetSize();
+      this.number_of_boards = impl.getNumberOfBoards();
     } catch (Exception e) {
 
       e.printStackTrace();
@@ -102,11 +104,11 @@ public class Client {
     return false;
   }
 
-  public void setup_sender_receiver(String a, String b ,SecretKey K_ab, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){ 
+  public void setup_sender_receiver(String a, String b ,SecretKey K_ab, int board_idx_ab, int board_idx_ba, int idx_ab, String tag_ab, SecretKey K_ba, int idx_ba, String tag_ba){ 
     String map_key = a + "__" + b;
-    security_information.put(map_key, new CommunicationState(K_ab, idx_ab, tag_ab));
+    security_information.put(map_key, new CommunicationState(K_ab, board_idx_ab, idx_ab, tag_ab));
     map_key = b + "__" + a;
-    security_information.put(map_key, new CommunicationState(K_ba, idx_ba, tag_ba));
+    security_information.put(map_key, new CommunicationState(K_ba, board_idx_ba, idx_ba, tag_ba));
   }
 
   private String hash(String b){
@@ -144,12 +146,14 @@ public class Client {
     //Random random = new Random(); //used to generate random numbers (used for generating a new idx)
     SecureRandom sec_rand = new SecureRandom();
     int new_idx = sec_rand.nextInt(board_size); //inclusive zero and exclusive n
+
+    int new_boardidx = sec_rand.nextInt(number_of_boards);
     //tag' element van  T
     String new_tag = generateSafeToken();
 
     //u = encrypt(message || idx' || tag', sender_receiver)
     //you're the sender
-    SealedObject u = encrypt(message + "__" + new_idx + "__" + new_tag, map_key);
+    SealedObject u = encrypt(message + "__" + new_boardidx + "__"+ new_idx + "__" + new_tag, map_key);
     byte[] u_byte = null;
     try{
       u_byte = sealedObject_to_byteArray(u);
@@ -160,7 +164,7 @@ public class Client {
     //write(idx_AB, u hash(tagAB)) in bulletin board, use the original/old idx and tag: the new_idx and new_tag are meant for the next message
     //impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u, hash(security_information.get(map_key).get_tag()));
     try{
-      impl.bulletinBoard_add(security_information.get(map_key).get_idx(), u_byte, hash(security_information.get(map_key).get_tag()));
+      impl.bulletinBoard_add(security_information.get(map_key).get_boardidx(), security_information.get(map_key).get_idx(), u_byte, hash(security_information.get(map_key).get_tag()));
     }catch(RemoteException e){
       System.out.println("RemoteException: " + e.getMessage());
     }
@@ -168,6 +172,7 @@ public class Client {
     //replace the old tag and idx in security_information with tag' (= new_tag) and idx' (= new_idx) for this sender__receiver pair
     security_information.get(map_key).set_idx(new_idx);
     security_information.get(map_key).set_tag(new_tag);
+    security_information.get(map_key).set_boardidx(new_boardidx);
 
     //K_ab (in security_information) = KDF(K_ab)
     //replace the old K in security_information with the new_K for this sender__receiver pair
@@ -187,7 +192,7 @@ public class Client {
     //u = get(idx_ab, tag_ab) uit bulletin board
     byte[] u_byte = null;
     try{
-      u_byte = impl.bulletinBoard_get(state.get_idx(), state.get_tag());
+      u_byte = impl.bulletinBoard_get(state.get_boardidx(),state.get_idx(), state.get_tag());
     }catch(RemoteException e){
       System.out.println("RemoteException: " + e.getMessage());
     }
@@ -204,11 +209,13 @@ public class Client {
       if(message != null){
         String[] parts = message.split("__"); 
         String text = parts[0];
-        int idx_new =  Integer.parseInt(parts[1]);
-        String tag_new = parts[2];
+        int new_boardidx = Integer.parseInt(parts[1]);
+        int idx_new =  Integer.parseInt(parts[2]);
+        String tag_new = parts[3];
+        
 
         SecretKey K_ab = KDF(state.get_K());
-        security_information.replace(map_key, new CommunicationState(K_ab, idx_new, tag_new));
+        security_information.replace(map_key, new CommunicationState(K_ab,new_boardidx, idx_new, tag_new));
 
         String[] sender_receiver = map_key.split("__");
         showReceivedMessage(sender_receiver[0], text);
@@ -363,11 +370,12 @@ public class Client {
 }
 
   String[] generate_initial_security_information_for_connection(String chatName){
-    String[] ret = new String[3];
+    String[] ret = new String[4];
     
     SecureRandom sec_rand = new SecureRandom();
     int idx = sec_rand.nextInt(board_size); //inclusive zero and exclusive n
     
+    int boardidx = sec_rand.nextInt(number_of_boards);
     //tag' element van  T
     String tag = generateSafeToken();
     
@@ -384,13 +392,15 @@ public class Client {
       System.out.println(); //voor mooiere formatting
       System.out.println("--------------------Security information of " + username + " (for chat "+ chatName + " - "+ username +")"+"--------------------");
       System.out.println("effectieve SecretKey in Base64: " + encodedKey); // om te kunnen ingeven bij de andere client
+      System.out.println("boardidx: " + boardidx);
       System.out.println("idx: " + idx);
       System.out.println("tag: " + tag);
       System.out.println("---------------------------------------------------------------------------");
 
       ret[0] = encodedKey;
-      ret[1] = String.valueOf(idx);
-      ret[2] = tag;
+      ret[1] = String.valueOf(boardidx);
+      ret[2] = String.valueOf(idx);
+      ret[3] = tag;
     }
 
     return ret;
@@ -399,25 +409,29 @@ public class Client {
   void set_up_connection(String[] security_information_client, String[] security_information_other_party, String chatName){
     byte[] decodedKey_1 = Base64.getDecoder().decode(security_information_client[0]);
     SecretKey K_ab = new SecretKeySpec(decodedKey_1, 0, decodedKey_1.length, "AES");
-    int idx_ab = Integer.parseInt(security_information_client[1]);
-    String tag_ab = security_information_client[2];
+    int board_idx_ab = Integer.parseInt(security_information_client[1]);
+    int idx_ab = Integer.parseInt(security_information_client[2]);
+    String tag_ab = security_information_client[3];
 
     byte[] decodedKey_2 = Base64.getDecoder().decode(security_information_other_party[0]);
     SecretKey K_ba = new SecretKeySpec(decodedKey_2, 0, decodedKey_2.length, "AES");
-    int idx_ba = Integer.parseInt(security_information_other_party[1]);
-    String tag_ba = security_information_other_party[2];
+    int board_idx_ba = Integer.parseInt(security_information_other_party[1]);
+    int idx_ba = Integer.parseInt(security_information_other_party[2]);
+    String tag_ba = security_information_other_party[3];
 
-    setup_sender_receiver(username, chatName, K_ab, idx_ab, tag_ab, K_ba, idx_ba, tag_ba);
+    setup_sender_receiver(username, chatName, K_ab, board_idx_ab, board_idx_ba,  idx_ab, tag_ab, K_ba, idx_ba, tag_ba);
   }
 
 }
 
 class CommunicationState{
   private SecretKey K;
+  private int boardidx;
   private int idx;
   private String tag;
 
-  public CommunicationState(SecretKey key, int idx, String tag){
+  public CommunicationState(SecretKey key, int boardidx, int idx, String tag){
+    this.boardidx = boardidx;
     this.K = key;
     this.idx = idx;
     this.tag = tag;
@@ -436,6 +450,10 @@ class CommunicationState{
     return tag;
   }
 
+  public int get_boardidx(){
+    return boardidx;
+  }
+
   //setters
   public void set_idx(int new_idx){
     idx = new_idx;
@@ -447,5 +465,9 @@ class CommunicationState{
 
   public void set_K(SecretKey new_K){
     K = new_K;
+  }
+
+  public void set_boardidx(int new_boardidx){
+    boardidx = new_boardidx;
   }
 }
