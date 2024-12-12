@@ -20,7 +20,7 @@ When starting a new chat, you need to specify the other user you want to communi
 
 
 ## The project
-We implemented the proposed Bulletin board described in the paper ‘Privately (and Unlinkably) Exchanging Messages Using a Public Bulletin Board’ [1]. As communication technology we used RMI and used Java JCA/JCE to implement the crypto protocols. 
+We implemented the proposed Bulletin board described in the paper ‘Privately (and Unlinkably) Exchanging Messages Using a Public Bulletin Board’ [1]. As communication technology we used RMI and we used Java JCA/JCE to implement the crypto protocols. 
 
 
 
