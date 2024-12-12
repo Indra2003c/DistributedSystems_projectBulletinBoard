@@ -4,13 +4,15 @@ There are two ways to run the project. The simplest way is to start the server b
 
 
 In case this doesn't work you can start the Server.jar and Client.jar manually. You need to go to the directory of the project in your cmd and run following commands.  \
-To start the server: \
+To start the server: 
 >java -jar --enable-preview Server.jar
 
-To start the client:  \
+To start the client:  
 >java -jar --enable-preview Client.jar
 
 These are the same commands that are executed in the .bat-scripts.  
 
 
 You can also go into the Server (or Client) directory and run the Server.java (or client.java) in the project itself.
+
+When starting a new chat, you need to specify the other user you want to communicate with. When you do this in both clients, the security information of that client (for this chat) will be shown in the cmd. You need to copy the information in the correct client, this is the initialisation step.
