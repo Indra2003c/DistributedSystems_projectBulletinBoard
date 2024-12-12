@@ -61,13 +61,4 @@ public class ServerFunctionsImpl extends UnicastRemoteObject implements ServerFu
     return Server.bulletinBoards.size();
   }
 
-  // @Override
-  // public void sendOnlineList(ClientFunctions client) throws RemoteException{
-  //   Server.sendOnlineList(client);
-  // }
-
-  // @Override
-  // public void sendPrivateMessage(String message,ClientFunctions clientImpl,String receiver)throws RemoteException{
-  //   Server.sendPrivateMessage(message, clientImpl, receiver);
-  // }
 }

@@ -126,13 +126,13 @@ public class Client {
   }
 
   private SecretKey KDF(SecretKey k){
-    //nieuwe key, afgeleid uit oude key
+    //new key, derived from old key
     byte[] existingKey = k.getEncoded();
         
     HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new org.bouncycastle.crypto.digests.SHA256Digest());
     hkdf.init(new HKDFParameters(existingKey, null, null));
 
-    // Afgeleide sleutel genereren (bijv. 256 bits = 32 bytes)
+    // generate derived keys (e.g. 256 bits = 32 bytes)
     byte[] derivedKey = new byte[existingKey.length];
     hkdf.generateBytes(derivedKey, 0, derivedKey.length);
 
@@ -220,23 +220,7 @@ public class Client {
         String[] sender_receiver = map_key.split("__");
         showReceivedMessage(sender_receiver[0], text);
       }
-    }
-    //if (u != null)
-      //and (m||idx'||tag')=open(u) is succesfull
-      //then
-        //put in security_information idx and tag, needed for next message:
-        //idx_ab = idx'_ab veranderen in security infromation
-        //tag_ab = tag'_ab veranderen in security infromation
-
-        //K_ab = KDF(K_ab) in security information
-
-        //m is received message =>showReceivedMessage(sender, m)
-        //showreceivedMesssage or return m...
-    
-    //indien return m. dan hier in de else: return null
-
-
-    
+    }    
   }
 
   private SealedObject encrypt(String value, String map_key){ //value =  message || idx || tag

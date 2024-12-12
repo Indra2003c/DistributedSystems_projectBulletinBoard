@@ -23,7 +23,7 @@ public class Gui extends JFrame {
     private JButton addChatButton;
     private JButton reloadButton;
     JLabel chatNameLabel;
-    private static Map<String, JPanel> chatPanels; // opslaan panels voor elke chat
+    private static Map<String, JPanel> chatPanels; // save panels for each chat
     private static String currentChat;
     private String username;
     private Client client;
